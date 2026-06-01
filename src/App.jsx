@@ -374,15 +374,15 @@ function HomePage({ onPageLinkClick }) {
           </div>
         </div>
 
-        <MadeByCredit />
-
-        <a
-          href="#portfolio-sections"
-          className="hero-scroll-link"
-          aria-label="Scroll to portfolio sections"
-        >
-          <ChevronDown size={34} strokeWidth={1.5} aria-hidden="true" />
-        </a>
+        <div className="hero-bottom-bar">
+          <a
+            href="#portfolio-sections"
+            className="hero-scroll-link"
+            aria-label="Scroll to portfolio sections"
+          >
+            <ChevronDown size={34} strokeWidth={1.5} aria-hidden="true" />
+          </a>
+        </div>
       </div>
 
       <section
@@ -411,6 +411,9 @@ function HomePage({ onPageLinkClick }) {
           ))}
         </div>
       </section>
+      <footer className="home-credit-footer" aria-label="Site credit">
+        <MadeByCredit />
+      </footer>
     </section>
   );
 }
@@ -443,12 +446,50 @@ function MadeByCredit() {
       <span>
         made with ❤︎⁠ by bay wiggins
       </span>
+      <CreditDogs />
       <SocialIconLinks
         className="site-credit-links"
         iconSize={17}
         links={creditLinks}
       />
     </div>
+  );
+}
+
+function CreditDogs() {
+  return (
+    <span
+      className="credit-dogs"
+      aria-label="Black labrador and golden retriever"
+      role="img"
+    >
+      <svg
+        className="credit-dog credit-dog-black-lab"
+        viewBox="0 0 52 28"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M12 15.8C10.2 14.4 8.4 12.9 6.7 11.4C5.7 10.5 4.3 11.8 5.1 12.9C6.2 14.5 7.5 16.1 9 17.5L12 15.8Z" />
+        <path d="M14.2 15.4C16.9 10.9 23.8 10.1 31.3 11.4C38.7 12.6 44.6 16 45.5 19.4C46.3 22.4 42.2 23.7 36.6 22.9C32.6 22.3 29.2 20.8 26.5 18.8C23.9 20.8 20.1 21.7 16.4 20.8C12.9 19.9 12.6 18.1 14.2 15.4Z" />
+        <circle cx="38.8" cy="9.4" r="4.1" />
+        <path d="M41.4 7.7C43.7 6.8 45.4 7.7 46.1 9.7C44.3 11 42.7 10.8 41.1 9.4L41.4 7.7Z" />
+        <path d="M18 21.1L16.4 26H13.9L14.8 20.6L18 21.1Z" />
+        <path d="M35.5 22.5L37.2 26H34.6L31.9 21.5L35.5 22.5Z" />
+      </svg>
+      <svg
+        className="credit-dog credit-dog-golden"
+        viewBox="0 0 52 28"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M12 15.8C10.2 14.4 8.4 12.9 6.7 11.4C5.7 10.5 4.3 11.8 5.1 12.9C6.2 14.5 7.5 16.1 9 17.5L12 15.8Z" />
+        <path d="M14.2 15.4C16.9 10.9 23.8 10.1 31.3 11.4C38.7 12.6 44.6 16 45.5 19.4C46.3 22.4 42.2 23.7 36.6 22.9C32.6 22.3 29.2 20.8 26.5 18.8C23.9 20.8 20.1 21.7 16.4 20.8C12.9 19.9 12.6 18.1 14.2 15.4Z" />
+        <circle cx="38.8" cy="9.4" r="4.1" />
+        <path d="M41.4 7.7C43.7 6.8 45.4 7.7 46.1 9.7C44.3 11 42.7 10.8 41.1 9.4L41.4 7.7Z" />
+        <path d="M18 21.1L16.4 26H13.9L14.8 20.6L18 21.1Z" />
+        <path d="M35.5 22.5L37.2 26H34.6L31.9 21.5L35.5 22.5Z" />
+      </svg>
+    </span>
   );
 }
 

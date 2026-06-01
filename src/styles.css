@@ -527,10 +527,6 @@ h1 {
 }
 
 .site-credit {
-  position: absolute;
-  bottom: 78px;
-  right: calc(50% - 50vw + 32px);
-  z-index: 3;
   display: inline-flex;
   max-width: min(520px, calc(100vw - 64px));
   align-items: center;
@@ -539,6 +535,28 @@ h1 {
   font-size: 0.88rem;
   font-weight: 650;
   letter-spacing: 0;
+}
+
+.credit-dogs {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  margin-inline: 1px 2px;
+}
+
+.credit-dog {
+  display: block;
+  width: 31px;
+  height: 18px;
+  filter: drop-shadow(0 1px 1px rgba(7, 11, 15, 0.18));
+}
+
+.credit-dog-black-lab {
+  fill: #151718;
+}
+
+.credit-dog-golden {
+  fill: #d7a44d;
 }
 
 .site-credit-links {
@@ -571,20 +589,48 @@ h1 {
   border-color: var(--brown-soft);
 }
 
-.hero-scroll-link {
+.hero-bottom-bar {
   position: absolute;
   bottom: 0;
   left: 50%;
-  display: inline-flex;
+  z-index: 3;
+  display: grid;
   width: 100vw;
   height: 64px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  z-index: 2;
-  color: var(--text);
+  gap: 16px;
+  padding: 0 32px;
   background: #8b674d;
   border-top: 1px solid rgba(245, 239, 230, 0.2);
   transform: translateX(-50%);
+}
+
+.home-credit-footer {
+  display: flex;
+  width: 100vw;
+  min-height: 128px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: calc(50% - 50vw);
+  padding: 34px clamp(24px, 4vw, 64px);
+  color: var(--text);
+  background: var(--bg-deep);
+  border-top: 1px solid rgba(245, 239, 230, 0.18);
+}
+
+.hero-scroll-link {
+  grid-column: 2;
+  grid-row: 1;
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  color: var(--text);
+  background: transparent;
+  border-radius: 999px;
   transition:
     color 150ms ease,
     background-color 150ms ease;
@@ -596,7 +642,7 @@ h1 {
 
 .hero-scroll-link:hover {
   color: var(--text);
-  background: #9b7354;
+  background: rgba(245, 239, 230, 0.08);
 }
 
 @keyframes scroll-arrow-wiggle {
@@ -1630,7 +1676,7 @@ h1 {
   }
 
   .landing-panel {
-    padding: 24px 0 84px;
+    padding: 24px 0 108px;
   }
 
   .profile-grid {
@@ -1667,12 +1713,38 @@ h1 {
   }
 
   .site-credit {
-    right: 14px;
-    left: 14px;
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
     text-align: center;
+  }
+
+  .hero-bottom-bar {
+    height: 64px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0;
+    padding: 0 14px;
+  }
+
+  .hero-scroll-link {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  .home-credit-footer {
+    justify-content: center;
+    padding-inline: 14px;
+  }
+
+  .hero-scroll-link {
+    width: 42px;
+    height: 38px;
+  }
+
+  .credit-dog {
+    width: 28px;
+    height: 16px;
   }
 
   .section-box-grid {
