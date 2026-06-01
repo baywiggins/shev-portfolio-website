@@ -1,19 +1,22 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { NavLink, Route, Routes, useLocation } from "react-router-dom";
+import {
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import Matter from "matter-js";
 import {
   ArrowUpRight,
   ChevronDown,
   ChevronUp,
+  Github,
   Home,
+  Instagram,
+  Linkedin,
+  Mail,
 } from "lucide-react";
-
-const navItems = [
-  { label: "Home", path: "/" },
-  { label: "Research", path: "/research" },
-  { label: "Ceramics", path: "/ceramics" },
-  { label: "Photography", path: "/photography" },
-  { label: "Travel", path: "/travel" },
-];
 
 const sections = [
   {
@@ -47,6 +50,37 @@ const sections = [
     description:
       "Fragments from elsewhere: streets, meals, landscapes, textures, and the mood of being in motion.",
     Icon: TravelIcon,
+  },
+];
+
+const shevyaSocialLinks = [
+  {
+    label: "Shevya on LinkedIn",
+    href: "https://linkedin.com/in/shevya",
+    Icon: Linkedin,
+  },
+  {
+    label: "Shevya on Instagram",
+    href: "https://instagram.com/036.panda",
+    Icon: Instagram,
+  },
+  {
+    label: "Email Shevya",
+    href: "mailto:spanda7@jh.edu",
+    Icon: Mail,
+  },
+];
+
+const creditLinks = [
+  {
+    label: "Bay Wiggins on LinkedIn",
+    href: "https://linkedin.com/in/bayw",
+    Icon: Linkedin,
+  },
+  {
+    label: "Bay Wiggins on GitHub",
+    href: "https://github.com/baywiggins",
+    Icon: Github,
   },
 ];
 
@@ -103,58 +137,172 @@ function createSwooshPath() {
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [routeTransition, setRouteTransition] = useState(null);
+  const routeTransitionTimeoutsRef = useRef([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [location.pathname]);
 
+  useEffect(() => {
+    return () => {
+      routeTransitionTimeoutsRef.current.forEach((timeoutId) =>
+        window.clearTimeout(timeoutId),
+      );
+    };
+  }, []);
+
+  const startRouteTransition = ({ path, rect, title }) => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (prefersReducedMotion || !rect) {
+      navigate(path);
+      return;
+    }
+
+    routeTransitionTimeoutsRef.current.forEach((timeoutId) =>
+      window.clearTimeout(timeoutId),
+    );
+    routeTransitionTimeoutsRef.current = [];
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const startCenterX = rect.left + rect.width / 2;
+    const fallDrift = Math.max(
+      -36,
+      Math.min(36, (viewportWidth / 2 - startCenterX) * 0.05),
+    );
+    const fallLeft = rect.left + fallDrift;
+    const fallTop = viewportHeight / 2 - rect.height / 2;
+    const fallCenterX = fallLeft + rect.width / 2;
+    const fallCenterY = fallTop + rect.height / 2;
+    const coverRadius = Math.max(
+      Math.hypot(fallCenterX, fallCenterY),
+      Math.hypot(viewportWidth - fallCenterX, fallCenterY),
+      Math.hypot(fallCenterX, viewportHeight - fallCenterY),
+      Math.hypot(viewportWidth - fallCenterX, viewportHeight - fallCenterY),
+    );
+    const coverSize = Math.ceil(coverRadius * 2.16);
+    const transition = {
+      coverSize,
+      fallLeft,
+      fallTop,
+      key: `${path}-${Date.now()}`,
+      path,
+      phase: "drop",
+      rect,
+      sectionId: title.toLowerCase(),
+      title,
+      viewportHeight,
+      viewportWidth,
+    };
+
+    window.scrollTo({ top: 0, behavior: "auto" });
+    setRouteTransition(transition);
+
+    routeTransitionTimeoutsRef.current = [
+      window.setTimeout(() => {
+        setRouteTransition((currentTransition) =>
+          currentTransition
+            ? { ...currentTransition, phase: "expand" }
+            : currentTransition,
+        );
+      }, 760),
+      window.setTimeout(() => {
+        navigate(path);
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }, 1500),
+      window.setTimeout(() => {
+        setRouteTransition((currentTransition) =>
+          currentTransition
+            ? { ...currentTransition, phase: "fade" }
+            : currentTransition,
+        );
+      }, 1620),
+      window.setTimeout(() => {
+        setRouteTransition(null);
+        routeTransitionTimeoutsRef.current = [];
+      }, 2100),
+    ];
+  };
+
   return (
-    <div className="site-shell">
-      <SiteHeader />
+    <div
+      className={[
+        "site-shell",
+        routeTransition ? "site-shell-route-transitioning" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <main className="page-frame">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/"
+            element={<HomePage onPageLinkClick={startRouteTransition} />}
+          />
           {sections.map((section) => (
             <Route
               key={section.path}
               path={section.path}
-              element={<PlaceholderPage section={section} />}
+              element={
+                section.id === "ceramics" ? (
+                  <CeramicsPage section={section} />
+                ) : (
+                  <PlaceholderPage section={section} />
+                )
+              }
             />
           ))}
         </Routes>
       </main>
+      <RouteTransitionOverlay transition={routeTransition} />
     </div>
   );
 }
 
-function SiteHeader() {
-  return (
-    <header className="site-header">
-      <NavLink className="brand-mark" to="/" aria-label="Shevya home">
-        <span className="brand-symbol" aria-hidden="true">
-          S
-        </span>
-        <span>Shevya</span>
-      </NavLink>
+function RouteTransitionOverlay({ transition }) {
+  if (!transition) {
+    return null;
+  }
 
-      <nav className="top-nav" aria-label="Primary navigation">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              isActive ? "nav-link nav-link-active" : "nav-link"
-            }
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-    </header>
+  const { coverSize, fallLeft, fallTop, phase, rect, sectionId, title } =
+    transition;
+  const coverLeft = fallLeft + rect.width / 2 - coverSize / 2;
+  const coverTop = fallTop + rect.height / 2 - coverSize / 2;
+
+  return (
+    <div
+      key={transition.key}
+      className={[
+        "route-transition-overlay",
+        `route-transition-overlay-${phase}`,
+        `route-transition-section-${sectionId}`,
+      ].join(" ")}
+      aria-hidden="true"
+      style={{
+        "--cover-left": `${coverLeft}px`,
+        "--cover-size": `${coverSize}px`,
+        "--cover-top": `${coverTop}px`,
+        "--fall-left": `${fallLeft}px`,
+        "--fall-top": `${fallTop}px`,
+        "--start-height": `${rect.height}px`,
+        "--start-left": `${rect.left}px`,
+        "--start-top": `${rect.top}px`,
+        "--start-width": `${rect.width}px`,
+      }}
+    >
+      <div className="route-transition-orb">
+        <span>{title}</span>
+      </div>
+    </div>
   );
 }
 
-function HomePage() {
+function HomePage({ onPageLinkClick }) {
   const [swooshPath] = useState(() => createSwooshPath());
   const [activeSection, setActiveSection] = useState("");
   const [motionPhases, setMotionPhases] = useState({});
@@ -199,6 +347,8 @@ function HomePage() {
   return (
     <section id="landing" className="home-page" aria-labelledby="home-title">
       <div className="landing-panel">
+        <FloatingPageLinks items={sections} onNavigate={onPageLinkClick} />
+
         <div className="profile-grid">
           <svg
             className="hero-swoosh"
@@ -217,8 +367,14 @@ function HomePage() {
               research, clay work, photographs, and notes from the world as she
               sees it.
             </p>
+            <SocialIconLinks
+              className="profile-socials"
+              links={shevyaSocialLinks}
+            />
           </div>
         </div>
+
+        <MadeByCredit />
 
         <a
           href="#portfolio-sections"
@@ -256,6 +412,454 @@ function HomePage() {
         </div>
       </section>
     </section>
+  );
+}
+
+function SocialIconLinks({ className = "", iconSize = 20, links }) {
+  return (
+    <nav
+      className={["icon-link-row", className].filter(Boolean).join(" ")}
+      aria-label="Social links"
+    >
+      {links.map(({ label, href, Icon }) => (
+        <a
+          key={label}
+          className="icon-link"
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={label}
+        >
+          <Icon size={iconSize} strokeWidth={1.8} aria-hidden="true" />
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+function MadeByCredit() {
+  return (
+    <div className="site-credit">
+      <span>
+        made with ❤︎⁠ by bay wiggins
+      </span>
+      <SocialIconLinks
+        className="site-credit-links"
+        iconSize={17}
+        links={creditLinks}
+      />
+    </div>
+  );
+}
+
+function FloatingPageLinks({ items, onNavigate }) {
+  const [detachedLinkId, setDetachedLinkId] = useState("");
+  const fieldRef = useRef(null);
+  const linkRefs = useRef([]);
+  const ropeRefs = useRef([]);
+
+  useEffect(() => {
+    const field = fieldRef.current;
+
+    if (!field) {
+      return undefined;
+    }
+
+    const { Bodies, Body, Composite, Constraint, Engine } = Matter;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const engine = Engine.create();
+    const particles = [];
+    let animationFrame = 0;
+    let lastFrameTime = performance.now();
+    let lastWindow = {
+      height: window.innerHeight,
+      screenX: window.screenX || 0,
+      screenY: window.screenY || 0,
+      width: window.innerWidth,
+    };
+
+    engine.gravity.y = 1.36;
+    engine.gravity.scale = 0.00155;
+
+    const createRopePath = (points) => {
+      if (points.length < 2) {
+        return "";
+      }
+
+      let path = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+
+      for (let index = 1; index < points.length - 1; index += 1) {
+        const current = points[index];
+        const next = points[index + 1];
+        const midX = (current.x + next.x) / 2;
+        const midY = (current.y + next.y) / 2;
+        path += ` Q ${current.x.toFixed(1)} ${current.y.toFixed(1)} ${midX.toFixed(1)} ${midY.toFixed(1)}`;
+      }
+
+      const last = points[points.length - 1];
+      path += ` T ${last.x.toFixed(1)} ${last.y.toFixed(1)}`;
+      return path;
+    };
+
+    const measure = () => {
+      const fieldRect = field.getBoundingClientRect();
+      const laneWidth = fieldRect.width / items.length;
+      const isCompact = fieldRect.width < 640;
+      let shouldRebuild = particles.length !== items.length;
+
+      items.forEach((_, index) => {
+        const orbSize = isCompact ? 94 : 118;
+        const ropeLength = isCompact
+          ? 78 + (index % 2) * 9
+          : 116 + (index % 2) * 12;
+        const segmentCount = isCompact ? 6 : 7;
+        const segmentLength = ropeLength / (segmentCount + 1);
+        const anchor = {
+          x: laneWidth * (index + 0.5),
+          y: isCompact ? -7 : -14,
+        };
+        const previous = particles[index];
+
+        if (
+          previous &&
+          (previous.orbSize !== orbSize ||
+            previous.segmentCount !== segmentCount)
+        ) {
+          shouldRebuild = true;
+        }
+
+        if (previous) {
+          previous.anchor = anchor;
+          previous.orbSize = orbSize;
+          previous.ropeLength = ropeLength;
+          previous.segmentCount = segmentCount;
+          previous.segmentLength = segmentLength;
+
+          previous.constraints.forEach((constraint, constraintIndex) => {
+            if (constraintIndex === 0) {
+              constraint.pointA = anchor;
+            }
+
+            if (constraintIndex === previous.constraints.length - 1) {
+              constraint.length = ropeLength + orbSize * 0.56;
+            } else if (constraintIndex === previous.constraints.length - 2) {
+              constraint.length = segmentLength + orbSize * 0.48;
+            } else {
+              constraint.length = segmentLength;
+            }
+          });
+        }
+      });
+
+      if (shouldRebuild) {
+        Composite.clear(engine.world, false);
+        particles.length = 0;
+
+        items.forEach((_, index) => {
+          const orbSize = isCompact ? 94 : 118;
+          const radius = orbSize / 2;
+          const ropeLength = isCompact
+            ? 78 + (index % 2) * 9
+            : 116 + (index % 2) * 12;
+          const segmentCount = isCompact ? 6 : 7;
+          const segmentLength = ropeLength / (segmentCount + 1);
+          const anchor = {
+            x: laneWidth * (index + 0.5),
+            y: isCompact ? -7 : -14,
+          };
+          const startSide = index % 2 === 0 ? -1 : 1;
+          const collisionGroup = -1 - index;
+          const ropeBodies = Array.from({ length: segmentCount }, (_, nodeIndex) =>
+            Bodies.circle(
+              anchor.x + startSide * randomBetween(12, 34),
+              anchor.y + segmentLength * (nodeIndex + 1) - randomBetween(90, 150),
+              3.2,
+              {
+                collisionFilter: { group: collisionGroup },
+                density: 0.00055,
+                frictionAir: 0.044,
+                isSensor: true,
+              },
+            ),
+          );
+          const body = Bodies.circle(
+            anchor.x + startSide * randomBetween(30, 68),
+            anchor.y + ropeLength + radius - randomBetween(135, 200),
+            radius,
+            {
+              collisionFilter: { group: collisionGroup },
+              density: 0.0019,
+              frictionAir: 0.048,
+              restitution: 0.28,
+            },
+          );
+
+          const constraints = [
+            Constraint.create({
+              bodyB: ropeBodies[0],
+              damping: 0.18,
+              length: segmentLength,
+              pointA: anchor,
+              stiffness: 0.42,
+            }),
+          ];
+
+          ropeBodies.slice(1).forEach((ropeBody, nodeIndex) => {
+            constraints.push(
+              Constraint.create({
+                bodyA: ropeBodies[nodeIndex],
+                bodyB: ropeBody,
+                damping: 0.16,
+                length: segmentLength,
+                stiffness: 0.4,
+              }),
+            );
+          });
+
+          constraints.push(
+            Constraint.create({
+              bodyA: ropeBodies[ropeBodies.length - 1],
+              bodyB: body,
+              damping: 0.16,
+              length: segmentLength + orbSize * 0.48,
+              stiffness: 0.38,
+            }),
+          );
+
+          const driftConstraint = Constraint.create({
+            bodyB: body,
+            damping: 0.075,
+            length: ropeLength + orbSize * 0.56,
+            pointA: anchor,
+            stiffness: 0.04,
+          });
+          constraints.push(driftConstraint);
+
+          Body.setVelocity(body, {
+            x: startSide * randomBetween(1.1, 2),
+            y: randomBetween(0.9, 1.6),
+          });
+
+          particles[index] = {
+            anchor,
+            body,
+            constraints,
+            orbSize,
+            ropeBodies,
+            ropeLength,
+            segmentCount,
+            segmentLength,
+          };
+
+          Composite.add(engine.world, [body, ...ropeBodies, ...constraints]);
+        });
+      }
+    };
+
+    const render = () => {
+      particles.forEach((particle, index) => {
+        const link = linkRefs.current[index];
+        const rope = ropeRefs.current[index];
+
+        if (!link || !rope) {
+          return;
+        }
+
+        const { anchor, body, orbSize, ropeBodies } = particle;
+        const finalNode = ropeBodies[ropeBodies.length - 1];
+        const dx = body.position.x - finalNode.position.x;
+        const dy = body.position.y - finalNode.position.y;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        const attachRadius = orbSize * 0.48;
+        const attachPoint = {
+          x: body.position.x - (dx / distance) * attachRadius,
+          y: body.position.y - (dy / distance) * attachRadius,
+        };
+        const ropePoints = [
+          anchor,
+          ...ropeBodies.map((ropeBody) => ropeBody.position),
+          attachPoint,
+        ];
+        const isDetached = link.dataset.detached === "true";
+
+        link.style.setProperty("--orb-size", `${orbSize}px`);
+        link.style.opacity = isDetached ? "0" : "1";
+        link.style.transform = `translate3d(${body.position.x - orbSize / 2}px, ${body.position.y - orbSize / 2}px, 0) rotate(${body.angle * 0.36}rad)`;
+        rope.setAttribute("d", createRopePath(ropePoints));
+        rope.style.opacity = isDetached ? "0.28" : "1";
+      });
+    };
+
+    const step = (time) => {
+      const elapsed = Math.min(time - lastFrameTime, 34);
+      lastFrameTime = time;
+
+      const currentWindow = {
+        height: window.innerHeight,
+        screenX: window.screenX || 0,
+        screenY: window.screenY || 0,
+        width: window.innerWidth,
+      };
+      const movedX = currentWindow.screenX - lastWindow.screenX;
+      const movedY = currentWindow.screenY - lastWindow.screenY;
+      const resizedX = currentWindow.width - lastWindow.width;
+      const resizedY = currentWindow.height - lastWindow.height;
+
+      if (resizedX !== 0 || resizedY !== 0) {
+        measure();
+      }
+
+      const impulseX = Math.max(-3.1, Math.min(3.1, movedX * -0.018 + resizedX * -0.011));
+      const impulseY = Math.max(-2.8, Math.min(2.8, movedY * -0.014 + resizedY * -0.01));
+      const hasWindowImpulse = Math.abs(impulseX) > 0.03 || Math.abs(impulseY) > 0.03;
+
+      particles.forEach((particle, index) => {
+        const { anchor, body, orbSize, ropeBodies, ropeLength } = particle;
+
+        if (reducedMotion.matches) {
+          ropeBodies.forEach((ropeBody, nodeIndex) => {
+            Body.setPosition(ropeBody, {
+              x: anchor.x,
+              y: anchor.y + ((nodeIndex + 1) / (ropeBodies.length + 1)) * ropeLength,
+            });
+            Body.setVelocity(ropeBody, { x: 0, y: 0 });
+          });
+          Body.setPosition(body, {
+            x: anchor.x,
+            y: anchor.y + ropeLength + orbSize / 2,
+          });
+          Body.setVelocity(body, { x: 0, y: 0 });
+          Body.setAngularVelocity(body, 0);
+          return;
+        }
+
+        if (hasWindowImpulse) {
+          ropeBodies.forEach((ropeBody, nodeIndex) => {
+            Body.setVelocity(ropeBody, {
+              x:
+                ropeBody.velocity.x +
+                impulseX * (0.16 + nodeIndex * 0.045),
+              y: ropeBody.velocity.y + impulseY * 0.14,
+            });
+          });
+          Body.setVelocity(body, {
+            x: body.velocity.x + impulseX * (index % 2 === 0 ? 0.64 : 0.56),
+            y: body.velocity.y + impulseY * 0.52,
+          });
+          Body.setAngularVelocity(
+            body,
+            body.angularVelocity + impulseX * 0.0035 * (index % 2 === 0 ? 1 : -1),
+          );
+        }
+
+        const clampVelocity = (physicsBody, maxSpeed) => {
+          const speed = Math.hypot(physicsBody.velocity.x, physicsBody.velocity.y);
+
+          if (speed > maxSpeed) {
+            const scale = maxSpeed / speed;
+            Body.setVelocity(physicsBody, {
+              x: physicsBody.velocity.x * scale,
+              y: physicsBody.velocity.y * scale,
+            });
+          }
+        };
+
+        ropeBodies.forEach((ropeBody) => clampVelocity(ropeBody, 5.6));
+        clampVelocity(body, 6.2);
+      });
+
+      if (!reducedMotion.matches) {
+        Engine.update(engine, elapsed);
+      }
+
+      render();
+      lastWindow = currentWindow;
+      animationFrame = window.requestAnimationFrame(step);
+    };
+
+    measure();
+    render();
+    window.addEventListener("resize", measure);
+    animationFrame = window.requestAnimationFrame(step);
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [items.length]);
+
+  const handlePageLinkClick = (event, item, index) => {
+    if (!onNavigate || detachedLinkId) {
+      return;
+    }
+
+    const link = linkRefs.current[index];
+    const orb = link?.querySelector(".hanging-link-orb");
+
+    if (!orb) {
+      return;
+    }
+
+    event.preventDefault();
+    setDetachedLinkId(item.id);
+
+    onNavigate({
+      path: item.path,
+      rect: orb.getBoundingClientRect(),
+      title: item.title,
+    });
+  };
+
+  return (
+    <nav
+      ref={fieldRef}
+      className="floating-link-field"
+      aria-label="Portfolio page links"
+    >
+      <svg
+        className="hanging-rope-layer"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {items.map((item, index) => (
+          <path
+            key={item.id}
+            ref={(element) => {
+              ropeRefs.current[index] = element;
+            }}
+            className={[
+              "hanging-link-rope",
+              `hanging-link-rope-${item.id}`,
+              detachedLinkId === item.id ? "hanging-link-rope-detached" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          />
+        ))}
+      </svg>
+      {items.map((item, index) => (
+        <NavLink
+          key={item.id}
+          to={item.path}
+          ref={(element) => {
+            linkRefs.current[index] = element;
+          }}
+          className={[
+            "floating-page-link",
+            `floating-page-link-${item.id}`,
+            detachedLinkId === item.id ? "floating-page-link-detached" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          data-detached={detachedLinkId === item.id ? "true" : "false"}
+          onClick={(event) => handlePageLinkClick(event, item, index)}
+        >
+          <span className="hanging-link-orb">
+            <span className="floating-page-link-text">{item.title}</span>
+          </span>
+        </NavLink>
+      ))}
+    </nav>
   );
 }
 
@@ -540,7 +1144,10 @@ function PlaceholderPage({ section }) {
   const { Icon } = section;
 
   return (
-    <section className="placeholder-page" aria-labelledby={`${section.title}-title`}>
+    <section
+      className={`placeholder-page route-page-${section.id}`}
+      aria-labelledby={`${section.title}-title`}
+    >
       <div className="placeholder-hero">
         <div className="placeholder-title">
           <Icon size={34} strokeWidth={1.4} />
@@ -551,6 +1158,55 @@ function PlaceholderPage({ section }) {
           <Home size={18} strokeWidth={1.7} aria-hidden="true" />
           Back home
         </NavLink>
+      </div>
+    </section>
+  );
+}
+
+function CeramicsPage({ section }) {
+  const { Icon } = section;
+  const ceramicPieces = [
+    "Moon jar study",
+    "Handled cup study",
+    "Bottle form study",
+    "Low bowl study",
+    "Small vase study",
+    "Surface test study",
+  ];
+
+  return (
+    <section
+      className="ceramics-page route-page-ceramics"
+      aria-labelledby="ceramics-page-title"
+    >
+      <header className="ceramics-page-header">
+        <NavLink to="/" className="ceramics-home-link">
+          <Home size={18} strokeWidth={1.7} aria-hidden="true" />
+          Back home
+        </NavLink>
+        <div className="ceramics-header-copy">
+          <Icon size={46} strokeWidth={1.35} aria-hidden="true" />
+          <div>
+            <h1 id="ceramics-page-title">Ceramics</h1>
+            <p>
+              A temporary wall of forms, glazes, and quiet objects while the
+              real archive comes together.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="ceramics-gallery" aria-label="Ceramics preview images">
+        {ceramicPieces.map((piece, index) => (
+          <figure key={piece} className={`ceramics-preview ceramics-preview-${index + 1}`}>
+            <div
+              className="ceramics-preview-image"
+              role="img"
+              aria-label={piece}
+            />
+            <figcaption>{piece}</figcaption>
+          </figure>
+        ))}
       </div>
     </section>
   );
