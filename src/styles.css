@@ -79,7 +79,7 @@ button {
   left: 50%;
   z-index: 11;
   width: 100vw;
-  height: 240px;
+  height: clamp(132px, 22vh, 240px);
   overflow: visible;
   pointer-events: none;
   transform: translateX(-50%);
@@ -385,6 +385,11 @@ button {
   align-items: center;
   margin: 0 auto;
   gap: clamp(40px, 6vw, 84px);
+  padding-top: max(
+    clamp(168px, 27vh, 216px),
+    clamp(0px, calc(720px - 100vh), 160px)
+  );
+  transform: translateY(clamp(16px, 2.2vh, 24px));
 }
 
 .hero-swoosh {
@@ -1606,7 +1611,10 @@ h1 {
   .profile-grid {
     grid-template-columns: 1fr;
     justify-items: center;
-    padding-top: 118px;
+    padding-top: max(
+      clamp(168px, 27vh, 216px),
+      clamp(0px, calc(720px - 100vh), 160px)
+    );
     text-align: center;
   }
 
@@ -1616,7 +1624,7 @@ h1 {
 
   .floating-link-field {
     top: calc(-1 * var(--header-height));
-    height: 220px;
+    height: clamp(126px, 22vh, 220px);
   }
 
   .hero-swoosh {
@@ -1681,12 +1689,15 @@ h1 {
 
   .profile-grid {
     gap: 28px;
-    padding-top: 136px;
+    padding-top: max(
+      clamp(168px, 27vh, 216px),
+      clamp(0px, calc(720px - 100vh), 160px)
+    );
   }
 
   .floating-link-field {
     top: calc(-1 * var(--header-height));
-    height: 190px;
+    height: clamp(118px, 21vh, 190px);
   }
 
   .floating-page-link {

@@ -546,19 +546,43 @@ function FloatingPageLinks({ items, onNavigate }) {
       const fieldRect = field.getBoundingClientRect();
       const laneWidth = fieldRect.width / items.length;
       const isCompact = fieldRect.width < 640;
+      const viewportHeight = window.innerHeight;
+      const heightRatio = Math.max(0, Math.min(1, (viewportHeight - 560) / 360));
+      const ropeScale = 0.48 + heightRatio * 0.52;
+      const isShortViewport = viewportHeight < 720;
       let shouldRebuild = particles.length !== items.length;
 
-      items.forEach((_, index) => {
+      const getHangingLinkLayout = (index) => {
         const orbSize = isCompact ? 94 : 118;
-        const ropeLength = isCompact
+        const baseRopeLength = isCompact
           ? 78 + (index % 2) * 9
           : 116 + (index % 2) * 12;
-        const segmentCount = isCompact ? 6 : 7;
+        const ropeLength = Math.round(baseRopeLength * ropeScale);
+        const segmentCount = isCompact
+          ? isShortViewport
+            ? 4
+            : 6
+          : isShortViewport
+            ? 5
+            : 7;
         const segmentLength = ropeLength / (segmentCount + 1);
         const anchor = {
           x: laneWidth * (index + 0.5),
-          y: isCompact ? -7 : -14,
+          y: isShortViewport ? (isCompact ? -24 : -34) : isCompact ? -7 : -14,
         };
+
+        return {
+          anchor,
+          orbSize,
+          ropeLength,
+          segmentCount,
+          segmentLength,
+        };
+      };
+
+      items.forEach((_, index) => {
+        const { anchor, orbSize, ropeLength, segmentCount, segmentLength } =
+          getHangingLinkLayout(index);
         const previous = particles[index];
 
         if (
@@ -597,17 +621,9 @@ function FloatingPageLinks({ items, onNavigate }) {
         particles.length = 0;
 
         items.forEach((_, index) => {
-          const orbSize = isCompact ? 94 : 118;
+          const { anchor, orbSize, ropeLength, segmentCount, segmentLength } =
+            getHangingLinkLayout(index);
           const radius = orbSize / 2;
-          const ropeLength = isCompact
-            ? 78 + (index % 2) * 9
-            : 116 + (index % 2) * 12;
-          const segmentCount = isCompact ? 6 : 7;
-          const segmentLength = ropeLength / (segmentCount + 1);
-          const anchor = {
-            x: laneWidth * (index + 0.5),
-            y: isCompact ? -7 : -14,
-          };
           const startSide = index % 2 === 0 ? -1 : 1;
           const collisionGroup = -1 - index;
           const ropeBodies = Array.from({ length: segmentCount }, (_, nodeIndex) =>
